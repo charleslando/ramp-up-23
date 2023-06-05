@@ -1,45 +1,46 @@
 from fastapi import FastAPI
+from schemas import Book 
+import random
 
 app = FastAPI()
-
-# Temporary in-memory storage for books
-books = []
-
+# counter = 1
+library = {}
 @app.post("/books/")
-def create_book(title: str, author: str, year: int):
-    book = {
-        "id": len(books) + 1,
-        "title": title,
-        "author": author,
-        "year": year
-    }
-    books.append(book)
-    return book
+async def add_book(b: Book):
 
-@app.get("/books/")
-def get_all_books():
-    return books
+    ident = random.randint(100,999)
+    library[ident] = b
+    # counter += 1
+    return ident
+
+@app.get('/books/')
+async def get_all_books():
+    return list(library.values())
+
+
 
 @app.get("/books/{id}")
-def get_book_by_id(id: int):
-    for book in books:
-        if book["id"] == id:
-            return book
-    return {"error": "Book not found"}
+async def get_specific_book(id: int):
+    return library.get(id, "No book found with that ID")
 
 @app.put("/books/{id}")
-def update_book(id: int, title: str, author: str, year: int):
-    for book in books:
-        if book["id"] == id:
-            book["title"] = title
-            book["author"] = author
-            book["year"] = year
-            return book
-    return {"error": "Book not found"}
+async def update_book(id: int, title: str = None, author: str = None, year: int = None):
+    keys = library.keys()
+    #for book in keys:
+    if id in keys:
+        book = library.get(id)
+        if title:
+            book.title = title
+        if author:
+            book.author = author
+        if year:
+            book.year = year
+        return book
+    return {"Book to update not found"}
+
 
 @app.delete("/books/{id}")
-def delete_book(id: int):
-    for index, book in enumerate(books):
-        if book["id"] == id:
-            return books.pop(index)
-    return {"error": "Book not found"}
+async def delete_book(id: int):
+    library.pop(id, "Book to delete was not found")
+
+        
